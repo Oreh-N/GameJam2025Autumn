@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 public class Movement : MonoBehaviour
 {
 
-	[SerializeField] float speed = 0.03f;
+	[SerializeField] float speed = 0.3f;
 
 	private void Update()
 	{
