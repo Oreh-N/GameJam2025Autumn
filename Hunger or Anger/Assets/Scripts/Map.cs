@@ -6,7 +6,7 @@ public class Map : MonoBehaviour
 {
 	enum Items { Empty, Walls }
 	Vector3 mapStart = new Vector3(-48, -18, 0);
-	Vector2 size = new Vector2(43, 34);
+	Vector2 size = new Vector2(83, 38);
 	[SerializeField] bool showGizmo = false;
 	public static Vector3Int cellSize = new Vector3Int(1, 1, 0);
 	int[,] map;
