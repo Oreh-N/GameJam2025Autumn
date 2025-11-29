@@ -4,19 +4,22 @@ using static UnityEngine.Rendering.DebugUI;
 
 public class Map : MonoBehaviour
 {
-	enum Items { Empty, Walls }
-	[SerializeField] Vector3 mapStart = Vector3.zero;
-	[SerializeField] static Vector2 size;
-	[SerializeField] bool showGizmo = false;
+	public enum Items { Empty, Walls }
+	[SerializeField] Tilemap wallTilemap;
+	// Map
 	public static Vector3Int cellSize = new Vector3Int(1, 1, 0);
+	static Vector3 mapStart = new Vector3(-47.5f, -18.5f, 0);
+	public static Vector2 size = new Vector2(83, 38);
 	int[,] map;
+	//
 
+	// For testing
+	[SerializeField] bool showGizmo = false;
+	[SerializeField] bool showMapGizmo = false;
+	[SerializeField] Transform target;
 	[SerializeField] int[] testPosMapToWorld = new int[2];
 	[SerializeField] Vector3 testPosWorldToMap = new Vector3();
-	[SerializeField] Tilemap wallTilemap;
-	[SerializeField] Transform target;
-	[SerializeField] bool showMapGizmo = false;
-
+	//
 
 	private void Awake()
 	{
@@ -84,9 +87,17 @@ public class Map : MonoBehaviour
 
 	public (int, int) GetWorldToMapPos(Vector3 pos)
 	{
-		int x = Mathf.FloorToInt((pos.x - mapStart.x) / cellSize.x);
-		int y = Mathf.FloorToInt((pos.y - mapStart.y) / cellSize.y);
+		int x = (int)((pos.x - mapStart.x) / cellSize.x);
+		int y = (int)((pos.y - mapStart.y) / cellSize.y);
+		if (x >= size.x || x < 0 || y < 0 || y >= size.y)
+		{ x = 0; y = 0; Debug.Log("Out of map position passed"); }
 		return (x, y);
+	}
+
+	public int WhatOnPos(Vector3 pos)
+	{
+		var i = GetWorldToMapPos(pos);
+		return map[i.Item1, i.Item2];
 	}
 
 	/// <summary>
@@ -95,6 +106,7 @@ public class Map : MonoBehaviour
 	private void SetWalls()
 	{
 		BoundsInt bounds = wallTilemap.cellBounds;
+		
 		Debug.Log(bounds + $"Cell in row count: {bounds.yMax}");
 
 		foreach (var pos in bounds.allPositionsWithin)
