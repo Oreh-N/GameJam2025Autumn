@@ -22,8 +22,8 @@ public class Map : MonoBehaviour
 		map = new int[(int)size.x, (int)size.y];
 		if (wallTilemap != null)
 		{
-			//SetWalls();
-			//PrintMap();
+			SetWalls();
+			PrintMap();
 		}
 	}
 
@@ -41,20 +41,25 @@ public class Map : MonoBehaviour
 		Gizmos.DrawCube(GetMapToWorldPos(testPosMapToWorld[0], testPosMapToWorld[1]), cellSize);
 
 		Gizmos.color = new Color(0, 0.5f, 0, 0.3f);
-		(int, int) posM = GetWorldToMapPos(target.position); 
+		(int, int) posM = GetWorldToMapPos(testPosWorldToMap); 
 		Gizmos.DrawCube(GetMapToWorldPos(posM.Item1, posM.Item2), cellSize);
 
-		//BoundsInt bounds = wallTilemap.cellBounds;
-		//foreach (var pos in bounds.allPositionsWithin)
-		//{
-		//	TileBase tile = wallTilemap.GetTile(pos);
-		//	if (tile != null)
-		//	{
-		//		Gizmos.color = new Color(0.4f, 0, 0.2f, 0.3f);
-		//		var pos2 = GetWorldToMapPos(pos);
-		//		Gizmos.DrawCube(GetMapToWorldPos(pos2.Item1, pos2.Item2), cellSize);
-		//	}
-		//}
+
+		Gizmos.color = new Color(0.2f, 0.1f, 0.5f, 0.3f);
+		(int, int) posT = GetWorldToMapPos(target.position);
+		Gizmos.DrawCube(GetMapToWorldPos(posT.Item1, posT.Item2), cellSize);
+
+		BoundsInt bounds = wallTilemap.cellBounds;
+		foreach (var pos in bounds.allPositionsWithin)
+		{
+			TileBase tile = wallTilemap.GetTile(pos);
+			if (tile != null)
+			{
+				Gizmos.color = new Color(0.4f, 0, 0.2f, 0.3f);
+				var pos2 = GetWorldToMapPos(pos);
+				Gizmos.DrawCube(GetMapToWorldPos(pos2.Item1, pos2.Item2), cellSize);
+			}
+		}
 	}
 
 	// Tested
