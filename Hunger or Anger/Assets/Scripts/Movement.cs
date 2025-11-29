@@ -22,7 +22,7 @@ public class Movement : MonoBehaviour
 		Vector2 dir = GetAnyWayDirection();
 		dir *= speed;
 		var nxt_pos = transform.position + new Vector3(dir.x * Map.cellSize.x, dir.y * Map.cellSize.y, 0);
-		if (map.GetMapValue(nxt_pos) == (int)Map.Items.Empty)
+		if (map.GetMapValue(nxt_pos) == (int)Map.Items.Empty || map.GetMapValue(nxt_pos) == (int)Map.Items.Carpets)
 			transform.position = nxt_pos;
 	}
 

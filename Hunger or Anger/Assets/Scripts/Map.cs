@@ -5,7 +5,7 @@ using static UnityEngine.Rendering.DebugUI;
 
 public class Map : MonoBehaviour
 {
-	public enum Items { Empty, Walls, Furniture }
+	public enum Items { Empty, Walls, Furniture, Carpets }
 
 	[SerializeField] Vector3 mapStart = Vector3.zero;
 	[SerializeField] Vector2Int size = new Vector2Int(83, 38);
@@ -15,7 +15,7 @@ public class Map : MonoBehaviour
 	[SerializeField] Tilemap furnitureTilemap;
 
 	[SerializeField] bool showGrid = false;
-	[SerializeField] bool showMapGizmo = false;
+	[SerializeField] bool showMapGizmo = false; // only works during the game 
 	[SerializeField] Transform targetForGizmo;
 
 	int[,] map;
