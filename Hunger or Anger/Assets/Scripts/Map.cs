@@ -56,4 +56,12 @@ public class Map : MonoBehaviour
 
 		return (mapPos[0], mapPos[1]);
 	}
+
+	/// <summary>
+	/// Finds where wall tiles are placed and then set the map values to wall value
+	/// </summary>
+	private void SetWalls()
+	{
+
+	}
 }
