@@ -10,6 +10,11 @@ public class CameraFollowing : MonoBehaviour
 	public float smoothSpeed = 0.2f;
 	public Vector3 offset; // Offset from the target
 
+	private void Awake()
+	{
+		Camera.main.nearClipPlane = 0.3f; // Default value
+		Camera.main.orthographicSize = 5; // Adjust based on your scene
+	}
 	private void Update()
 	{
 		if (target != null && !smoothnesse)
