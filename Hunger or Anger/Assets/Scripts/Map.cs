@@ -5,17 +5,18 @@ using static UnityEngine.Rendering.DebugUI;
 
 public class Map : MonoBehaviour
 {
-	public enum Items { Empty, Walls }
+	public enum Items { Empty, Walls, Furniture }
 
 	[SerializeField] Vector3 mapStart = Vector3.zero;
 	[SerializeField] Vector2Int size = new Vector2Int(83, 38);
 	public static readonly Vector3Int cellSize = new Vector3Int(1, 1, 0);
 
 	[SerializeField] Tilemap wallTilemap;
+	[SerializeField] Tilemap furnitureTilemap;
 
 	[SerializeField] bool showGrid = false;
-	[SerializeField] bool showTilemapConversion = false;
-	[SerializeField] Transform debugTarget;
+	[SerializeField] bool showMapGizmo = false;
+	[SerializeField] Transform targetForGizmo;
 
 	int[,] map;
 
@@ -25,7 +26,8 @@ public class Map : MonoBehaviour
 
 		if (wallTilemap)
 		{
-			CopyTilemapToMap();
+			CopyTilemapToMap(furnitureTilemap, (int)Items.Furniture);
+			CopyTilemapToMap(wallTilemap, (int)Items.Walls);
 		}
 	}
 
@@ -40,13 +42,13 @@ public class Map : MonoBehaviour
 		return map[x, y];
 	}
 
-	/// Convert map index → world position (center of the cell)
+	/// Convert map index -> world position (center of the cell)
 	public Vector3 MapToWorld(int x, int y)
 	{
 		return mapStart + new Vector3(x, y, 0);
 	}
 
-	/// Convert world position → map index
+	/// Convert world position -> map index
 	public (int, int) WorldToMap(Vector3 pos)
 	{
 		int x = Mathf.FloorToInt(pos.x - mapStart.x + 0.5f);
@@ -56,29 +58,30 @@ public class Map : MonoBehaviour
 				Mathf.Clamp(y, 0, size.y - 1));
 	}
 
-	void CopyTilemapToMap()
+	void CopyTilemapToMap(Tilemap tMap, int val)
 	{
-		BoundsInt bounds = wallTilemap.cellBounds;
+		BoundsInt bounds = tMap.cellBounds;
 
 		foreach (var cell in bounds.allPositionsWithin)
 		{
-			TileBase tile = wallTilemap.GetTile(cell);
+			TileBase tile = tMap.GetTile(cell);
 			if (tile == null) continue;
 
-			// Tilemap cell → world center
-			Vector3 world = wallTilemap.GetCellCenterWorld(cell);
+			// Tilemap cell -> world center
+			Vector3 worldPos = tMap.GetCellCenterWorld(cell);
 
-			// World → map cell
-			(int x, int y) = WorldToMap(world);
+			// World -> map cell
+			(int x, int y) = WorldToMap(worldPos);
 
 			// Set wall
 			if (x >= 0 && y >= 0 && x < size.x && y < size.y)
-				map[x, y] = (int)Items.Walls;
+				map[x, y] = val;
 		}
 	}
 
 	private void OnDrawGizmos()
 	{
+
 		if (!showGrid) return;
 
 		Gizmos.color = new Color(0.4f, 0, 0, 0.2f);
@@ -88,31 +91,32 @@ public class Map : MonoBehaviour
 				Gizmos.DrawCube(MapToWorld(x, y), cellSize);
 			}
 
-		if (debugTarget)
+		if (targetForGizmo)
 		{
 			Gizmos.color = new Color(0, 0.4f, 1f, 0.4f);
-			var (mx, my) = WorldToMap(debugTarget.position);
+			var (mx, my) = WorldToMap(targetForGizmo.position);
 			Gizmos.DrawCube(MapToWorld(mx, my), cellSize);
 		}
 
-		if (showTilemapConversion && wallTilemap)
-			ShowTilemapCellsGizmo();
+		if (showMapGizmo)
+		{
+			ShowMapGizmo();
+		}
 	}
-
-	void ShowTilemapCellsGizmo()
+	void ShowMapGizmo()
 	{
 		Gizmos.color = new Color(0.7f, 0, 0.4f, 0.3f);
 
-		BoundsInt bounds = wallTilemap.cellBounds;
-
-		foreach (var cell in bounds.allPositionsWithin)
+		for (int x = 0; x < size.x; x++)
 		{
-			if (!wallTilemap.HasTile(cell)) continue;
+			for (int y = 0; y < size.y; y++)
+			{
+				if (map[x, y] == 0) continue;
 
-			Vector3 world = wallTilemap.GetCellCenterWorld(cell);
-			var (mx, my) = WorldToMap(world);
-
-			Gizmos.DrawCube(MapToWorld(mx, my), cellSize);
+				Vector3 world = MapToWorld(x, y);
+				Gizmos.DrawCube(world, cellSize);
+			}
 		}
 	}
+
 }
