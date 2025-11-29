@@ -1,110 +1,105 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Tilemaps;
+using static UnityEditor.PlayerSettings;
 using static UnityEngine.Rendering.DebugUI;
 
 public class Map : MonoBehaviour
 {
-	enum Items { Empty, Walls }
+	public enum Items { Empty, Walls }
+
 	[SerializeField] Vector3 mapStart = Vector3.zero;
-	[SerializeField] static Vector2 size;
-	[SerializeField] bool showGizmo = false;
-	public static Vector3Int cellSize = new Vector3Int(1, 1, 0);
-	int[,] map;
+	[SerializeField] Vector2Int size = new Vector2Int(83, 38);
+	public static readonly Vector3Int cellSize = new Vector3Int(1, 1, 0);
 
-	[SerializeField] int[] testPosMapToWorld = new int[2];
-	[SerializeField] Vector3 testPosWorldToMap = new Vector3();
 	[SerializeField] Tilemap wallTilemap;
-	[SerializeField] Transform target;
-	[SerializeField] bool showMapGizmo = false;
 
+	[SerializeField] bool showGrid = false;
+	[SerializeField] bool showTilemapConversion = false;
+	[SerializeField] Transform debugTarget;
+
+	int[,] map;
 
 	private void Awake()
 	{
-		map = new int[(int)size.x, (int)size.y];
-		if (wallTilemap != null)
+		map = new int[size.x, size.y];
+
+		if (wallTilemap)
+			CopyTilemapToMap();
+	}
+
+	/// Convert map index → world position (center of the cell)
+	public Vector3 MapToWorld(int x, int y)
+	{
+		return mapStart + new Vector3(x, y, 0);
+	}
+
+	/// Convert world position → map index
+	public (int, int) WorldToMap(Vector3 pos)
+	{
+		int x = Mathf.FloorToInt(pos.x - mapStart.x + 0.5f);
+		int y = Mathf.FloorToInt(pos.y - mapStart.y + 0.5f);
+
+		return (Mathf.Clamp(x, 0, size.x - 1),
+				Mathf.Clamp(y, 0, size.y - 1));
+	}
+
+	void CopyTilemapToMap()
+	{
+		BoundsInt bounds = wallTilemap.cellBounds;
+
+		foreach (var cell in bounds.allPositionsWithin)
 		{
-			SetWalls();
+			TileBase tile = wallTilemap.GetTile(cell);
+			if (tile == null) continue;
+
+			// Tilemap cell → world center
+			Vector3 world = wallTilemap.GetCellCenterWorld(cell);
+
+			// World → map cell
+			(int x, int y) = WorldToMap(world);
+
+			// Set wall
+			if (x >= 0 && y >= 0 && x < size.x && y < size.y)
+				map[x, y] = (int)Items.Walls;
 		}
 	}
 
 	private void OnDrawGizmos()
 	{
-		if (!showGizmo) return;
+		if (!showGrid) return;
+
+		Gizmos.color = new Color(0.4f, 0, 0, 0.2f);
 		for (int x = 0; x < size.x; x++)
-		{
 			for (int y = 0; y < size.y; y++)
 			{
-				Gizmos.color = new Color(0.5f, 0, 0, 0.3f);
-				Gizmos.DrawCube(mapStart + new Vector3(x, y, 0), cellSize);
+				Gizmos.DrawCube(MapToWorld(x, y), cellSize);
 			}
-		}
-		Gizmos.color = new Color(0, 0, 0.5f, 0.3f);
-		Gizmos.DrawCube(GetMapToWorldPos(testPosMapToWorld[0], testPosMapToWorld[1]), cellSize);
 
-		Gizmos.color = new Color(0, 0.5f, 0, 0.3f);
-		(int, int) posM = GetWorldToMapPos(testPosWorldToMap);
-		Gizmos.DrawCube(GetMapToWorldPos(posM.Item1, posM.Item2), cellSize);
-
-
-		Gizmos.color = new Color(0.2f, 0.1f, 0.5f, 0.3f);
-		(int, int) posT = GetWorldToMapPos(target.position);
-		Gizmos.DrawCube(GetMapToWorldPos(posT.Item1, posT.Item2), cellSize);
-
-		if (showMapGizmo)
-			ShowMapGizmo();
-	}
-
-	public void ShowMapGizmo()
-	{
-		BoundsInt bounds = wallTilemap.cellBounds;
-		foreach (var pos in bounds.allPositionsWithin)
+		if (debugTarget)
 		{
-			TileBase tile = wallTilemap.GetTile(pos);
-			if (tile != null)
-			{
-				Gizmos.color = new Color(0.4f, 0, 0.2f, 0.3f);
-				var pos2 = GetWorldToMapPos(pos);
-				Gizmos.DrawCube(GetMapToWorldPos(pos2.Item1, pos2.Item2), cellSize);
-			}
+			Gizmos.color = new Color(0, 0.4f, 1f, 0.4f);
+			var (mx, my) = WorldToMap(debugTarget.position);
+			Gizmos.DrawCube(MapToWorld(mx, my), cellSize);
 		}
+
+		if (showTilemapConversion && wallTilemap)
+			ShowTilemapCellsGizmo();
 	}
 
-	// Tested
-	/// <summary>
-	/// Converts maps coordinates to world position
-	/// </summary>
-	/// <param name="mapX"> Index x on map</param>
-	/// <param name="mapY">Index y on map</param>
-	/// <returns></returns>
-	public Vector3 GetMapToWorldPos(int mapX, int mapY)
-	{	// +1 because the index starts from 0 (we don't want that)
-		var worldPos = new Vector3((mapX+1) * cellSize.x + mapStart.x, (mapY+1) * cellSize.y + mapStart.y);
-		return worldPos;
-	}
-
-	public (int, int) GetWorldToMapPos(Vector3 pos)
+	void ShowTilemapCellsGizmo()
 	{
-		int x = Mathf.FloorToInt((pos.x - mapStart.x) / cellSize.x);
-		int y = Mathf.FloorToInt((pos.y - mapStart.y) / cellSize.y);
-		return (x, y);
-	}
+		Gizmos.color = new Color(0.7f, 0, 0.4f, 0.3f);
 
-	/// <summary>
-	/// Finds where wall tiles are placed and then set the map values to wall value
-	/// </summary>
-	private void SetWalls()
-	{
 		BoundsInt bounds = wallTilemap.cellBounds;
-		Debug.Log(bounds + $"Cell in row count: {bounds.yMax}");
 
-		foreach (var pos in bounds.allPositionsWithin)
+		foreach (var cell in bounds.allPositionsWithin)
 		{
-			TileBase tile = wallTilemap.GetTile(pos);
-			if (tile != null)
-			{
-				(int, int) mapPos = GetWorldToMapPos(pos);
-				map[mapPos.Item1, mapPos.Item2] = (int)Items.Walls;
-			}
+			if (!wallTilemap.HasTile(cell)) continue;
+
+			Vector3 world = wallTilemap.GetCellCenterWorld(cell);
+			var (mx, my) = WorldToMap(world);
+
+			Gizmos.DrawCube(MapToWorld(mx, my), cellSize);
 		}
 	}
 }
