@@ -5,8 +5,8 @@ using static UnityEngine.Rendering.DebugUI;
 public class Map : MonoBehaviour
 {
 	enum Items { Empty, Walls }
-	Vector3 mapStart = new Vector3(-48, -18, 0);
-	Vector2 size = new Vector2(43, 34);
+	[SerializeField] Vector3 mapStart = Vector3.zero;
+	[SerializeField] static Vector2 size;
 	[SerializeField] bool showGizmo = false;
 	public static Vector3Int cellSize = new Vector3Int(1, 1, 0);
 	int[,] map;
@@ -77,15 +77,15 @@ public class Map : MonoBehaviour
 	/// <param name="mapY">Index y on map</param>
 	/// <returns></returns>
 	public Vector3 GetMapToWorldPos(int mapX, int mapY)
-	{   // +1 because the index starts from 0 (we don't want that)
-		var worldPos = new Vector3((mapX) * cellSize.x + mapStart.x, (mapY) * cellSize.y + mapStart.y);
+	{	// +1 because the index starts from 0 (we don't want that)
+		var worldPos = new Vector3((mapX+1) * cellSize.x + mapStart.x, (mapY+1) * cellSize.y + mapStart.y);
 		return worldPos;
 	}
 
 	public (int, int) GetWorldToMapPos(Vector3 pos)
 	{
-		int x = (int)((pos.x - mapStart.x) / cellSize.x);
-		int y = (int)((pos.y - mapStart.y) / cellSize.y);
+		int x = Mathf.FloorToInt((pos.x - mapStart.x) / cellSize.x);
+		int y = Mathf.FloorToInt((pos.y - mapStart.y) / cellSize.y);
 		return (x, y);
 	}
 
