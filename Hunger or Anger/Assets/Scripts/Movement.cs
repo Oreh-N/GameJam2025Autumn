@@ -6,12 +6,6 @@ public class Movement : MonoBehaviour
 	// Correct if gizmo on character's position
 
 	[SerializeField] int speed = 1;
-	Map map;
-
-	private void Awake()
-	{
-		map = FindAnyObjectByType<Map>();
-	}
 
 	private void Update()
 	{
@@ -21,12 +15,8 @@ public class Movement : MonoBehaviour
 	private void TryMove()
 	{
 		Vector2 dir = GetAnyWayDirection();
-
 		dir *= speed;
-		var new_pos = transform.position;
-		new_pos += new Vector3(dir.x * Map.cellSize.x, dir.y * Map.cellSize.y, 0);
-		if (map.WhatOnPos(new_pos) == (int)Map.Items.Empty)
-			transform.position = new_pos;
+		transform.position += new Vector3(dir.x * Map.cellSize.x, dir.y * Map.cellSize.y, 0);
 	}
 
 
