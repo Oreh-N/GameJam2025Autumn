@@ -6,22 +6,24 @@ public class Map : MonoBehaviour
 {
 	enum Items { Empty, Walls}
     [SerializeField] Vector3 mapStart = Vector3.zero;
-	[SerializeField] Vector2 size;
+	[SerializeField] static Vector2 size;
 	[SerializeField] bool show = false;
-	Vector3Int cellSize = new Vector3Int(1, 1, 0);
+	public static Vector3Int cellSize = new Vector3Int(1, 1, 0);
     int[,] map;
 
 	[SerializeField] int[] testPosMapToWorld = new int[2];
 	[SerializeField] Vector3 testPosWorldToMap = new Vector3();
 	[SerializeField] Tilemap wallTilemap;
+	[SerializeField] Transform target;
+
 
 	private void Awake()
 	{
 		map = new int[(int)size.x, (int)size.y];
 		if (wallTilemap != null)
 		{
-			SetWalls();
-			PrintMap();
+			//SetWalls();
+			//PrintMap();
 		}
 	}
 
@@ -39,7 +41,7 @@ public class Map : MonoBehaviour
 		Gizmos.DrawCube(GetMapToWorldPos(testPosMapToWorld[0], testPosMapToWorld[1]), cellSize);
 
 		Gizmos.color = new Color(0, 0.5f, 0, 0.3f);
-		(int, int) posM = GetWorldToMapPos(testPosWorldToMap); 
+		(int, int) posM = GetWorldToMapPos(target.position); 
 		Gizmos.DrawCube(GetMapToWorldPos(posM.Item1, posM.Item2), cellSize);
 
 		//BoundsInt bounds = wallTilemap.cellBounds;
@@ -64,7 +66,7 @@ public class Map : MonoBehaviour
 	/// <returns></returns>
 	public Vector3 GetMapToWorldPos(int mapX, int mapY)
 	{
-		var worldPos = new Vector3(mapX * cellSize.x + mapStart.x + 1, mapY * cellSize.y + mapStart.y + 1);
+		var worldPos = new Vector3(mapX * cellSize.x + mapStart.x, mapY * cellSize.y + mapStart.y);
 		return worldPos;
 	}
 
