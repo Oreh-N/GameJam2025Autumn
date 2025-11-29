@@ -4,17 +4,18 @@ using static UnityEngine.Rendering.DebugUI;
 
 public class Map : MonoBehaviour
 {
-	enum Items { Empty, Walls}
-    [SerializeField] Vector3 mapStart = Vector3.zero;
+	enum Items { Empty, Walls }
+	[SerializeField] Vector3 mapStart = Vector3.zero;
 	[SerializeField] static Vector2 size;
-	[SerializeField] bool show = false;
+	[SerializeField] bool showGizmo = false;
 	public static Vector3Int cellSize = new Vector3Int(1, 1, 0);
-    int[,] map;
+	int[,] map;
 
 	[SerializeField] int[] testPosMapToWorld = new int[2];
 	[SerializeField] Vector3 testPosWorldToMap = new Vector3();
 	[SerializeField] Tilemap wallTilemap;
 	[SerializeField] Transform target;
+	[SerializeField] bool showMapGizmo = false;
 
 
 	private void Awake()
@@ -23,14 +24,14 @@ public class Map : MonoBehaviour
 		if (wallTilemap != null)
 		{
 			SetWalls();
-			PrintMap();
 		}
 	}
 
 	private void OnDrawGizmos()
 	{
-		if (!show) return;
-		for (int x = 0; x < size.x; x++) { 
+		if (!showGizmo) return;
+		for (int x = 0; x < size.x; x++)
+		{
 			for (int y = 0; y < size.y; y++)
 			{
 				Gizmos.color = new Color(0.5f, 0, 0, 0.3f);
@@ -41,7 +42,7 @@ public class Map : MonoBehaviour
 		Gizmos.DrawCube(GetMapToWorldPos(testPosMapToWorld[0], testPosMapToWorld[1]), cellSize);
 
 		Gizmos.color = new Color(0, 0.5f, 0, 0.3f);
-		(int, int) posM = GetWorldToMapPos(testPosWorldToMap); 
+		(int, int) posM = GetWorldToMapPos(testPosWorldToMap);
 		Gizmos.DrawCube(GetMapToWorldPos(posM.Item1, posM.Item2), cellSize);
 
 
@@ -49,6 +50,12 @@ public class Map : MonoBehaviour
 		(int, int) posT = GetWorldToMapPos(target.position);
 		Gizmos.DrawCube(GetMapToWorldPos(posT.Item1, posT.Item2), cellSize);
 
+		if (showMapGizmo)
+			ShowMapGizmo();
+	}
+
+	public void ShowMapGizmo()
+	{
 		BoundsInt bounds = wallTilemap.cellBounds;
 		foreach (var pos in bounds.allPositionsWithin)
 		{
@@ -70,8 +77,8 @@ public class Map : MonoBehaviour
 	/// <param name="mapY">Index y on map</param>
 	/// <returns></returns>
 	public Vector3 GetMapToWorldPos(int mapX, int mapY)
-	{
-		var worldPos = new Vector3(mapX * cellSize.x + mapStart.x, mapY * cellSize.y + mapStart.y);
+	{	// +1 because the index starts from 0 (we don't want that)
+		var worldPos = new Vector3((mapX+1) * cellSize.x + mapStart.x, (mapY+1) * cellSize.y + mapStart.y);
 		return worldPos;
 	}
 
@@ -98,20 +105,6 @@ public class Map : MonoBehaviour
 				(int, int) mapPos = GetWorldToMapPos(pos);
 				map[mapPos.Item1, mapPos.Item2] = (int)Items.Walls;
 			}
-		}
-	}
-
-	private void PrintMap()
-	{
-		string row = string.Empty;
-		for (int x = 0; x < size.x; x++)
-		{
-			for (int y = 0; y < size.y; y++)
-			{
-				row += map[x, y].ToString();
-			}
-			Debug.Log($"x: {x};   " + row);
-			row = string.Empty;
 		}
 	}
 }
