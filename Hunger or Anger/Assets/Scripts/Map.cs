@@ -24,7 +24,20 @@ public class Map : MonoBehaviour
 		map = new int[size.x, size.y];
 
 		if (wallTilemap)
+		{
 			CopyTilemapToMap();
+		}
+	}
+
+	public int GetMapValue(Vector3 pos)
+	{
+		var i = WorldToMap(pos);
+		return map[i.Item1, i.Item2];
+	}
+
+	public int GetMapValue(int x, int y)
+	{
+		return map[x, y];
 	}
 
 	/// Convert map index → world position (center of the cell)

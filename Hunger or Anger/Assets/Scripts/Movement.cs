@@ -2,10 +2,15 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Movement : MonoBehaviour
-{	// It is important to set correct possition (so that map were detecting the character correctly)
+{   // It is important to set correct possition (so that map were detecting the character correctly)
 	// Correct if gizmo on character's position
-
 	[SerializeField] int speed = 1;
+	Map map;
+
+	private void Awake()
+	{
+		map = FindAnyObjectByType<Map>();
+	}
 
 	private void Update()
 	{
@@ -16,7 +21,9 @@ public class Movement : MonoBehaviour
 	{
 		Vector2 dir = GetAnyWayDirection();
 		dir *= speed;
-		transform.position += new Vector3(dir.x * Map.cellSize.x, dir.y * Map.cellSize.y, 0);
+		var nxt_pos = transform.position + new Vector3(dir.x * Map.cellSize.x, dir.y * Map.cellSize.y, 0);
+		if (map.GetMapValue(nxt_pos) == (int)Map.Items.Empty)
+			transform.position = nxt_pos;
 	}
 
 
