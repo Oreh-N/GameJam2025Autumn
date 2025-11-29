@@ -5,10 +5,11 @@ using static UnityEngine.Rendering.DebugUI;
 
 public class Map : MonoBehaviour
 {
+	public static Map Instance = new Map();
 	public enum Items { Empty, Walls, Furniture, Carpets }
 
 	[SerializeField] Vector3 mapStart = Vector3.zero;
-	[SerializeField] Vector2Int size = new Vector2Int(83, 38);
+	[SerializeField] public Vector2Int size = new Vector2Int(83, 38);
 	public static readonly Vector3Int cellSize = new Vector3Int(1, 1, 0);
 
 	[SerializeField] Tilemap wallTilemap;
@@ -22,9 +23,18 @@ public class Map : MonoBehaviour
 
 	private void Awake()
 	{
+		if (!Instance)
+			DontDestroyOnLoad(gameObject);
+		else
+			Destroy(gameObject);
+
 		map = new int[size.x, size.y];
 
-		if (wallTilemap)
+	}
+
+	private void Start()
+	{
+		if (wallTilemap && furnitureTilemap)
 		{
 			CopyTilemapToMap(furnitureTilemap, (int)Items.Furniture);
 			CopyTilemapToMap(wallTilemap, (int)Items.Walls);
@@ -34,7 +44,12 @@ public class Map : MonoBehaviour
 	public int GetMapValue(Vector3 pos)
 	{
 		var i = WorldToMap(pos);
-		return map[i.Item1, i.Item2];
+		if (map == null)
+		{
+			Debug.Log("Map not initialized");
+			return -1;
+		}
+		return map[i.x, i.y];
 	}
 
 	public int GetMapValue(int x, int y)
@@ -49,12 +64,12 @@ public class Map : MonoBehaviour
 	}
 
 	/// Convert world position -> map index
-	public (int, int) WorldToMap(Vector3 pos)
+	public Vector2Int WorldToMap(Vector3 pos)
 	{
 		int x = Mathf.FloorToInt(pos.x - mapStart.x + 0.5f);
 		int y = Mathf.FloorToInt(pos.y - mapStart.y + 0.5f);
 
-		return (Mathf.Clamp(x, 0, size.x - 1),
+		return new Vector2Int(Mathf.Clamp(x, 0, size.x - 1),
 				Mathf.Clamp(y, 0, size.y - 1));
 	}
 
@@ -71,11 +86,11 @@ public class Map : MonoBehaviour
 			Vector3 worldPos = tMap.GetCellCenterWorld(cell);
 
 			// World -> map cell
-			(int x, int y) = WorldToMap(worldPos);
+			Vector2Int v = WorldToMap(worldPos);
 
 			// Set wall
-			if (x >= 0 && y >= 0 && x < size.x && y < size.y)
-				map[x, y] = val;
+			if (v.x >= 0 && v.y >= 0 && v.x < size.x && v.y < size.y)
+				map[v.x, v.y] = val;
 		}
 	}
 
@@ -94,8 +109,8 @@ public class Map : MonoBehaviour
 		if (targetForGizmo)
 		{
 			Gizmos.color = new Color(0, 0.4f, 1f, 0.4f);
-			var (mx, my) = WorldToMap(targetForGizmo.position);
-			Gizmos.DrawCube(MapToWorld(mx, my), cellSize);
+			Vector2Int v = WorldToMap(targetForGizmo.position);
+			Gizmos.DrawCube(MapToWorld(v.x, v.y), cellSize);
 		}
 
 		if (showMapGizmo)
@@ -111,7 +126,7 @@ public class Map : MonoBehaviour
 		{
 			for (int y = 0; y < size.y; y++)
 			{
-				if (map[x, y] == 0) continue;
+				if (map[x, y] == 0) continue;	// will through an error if used not during the game
 
 				Vector3 world = MapToWorld(x, y);
 				Gizmos.DrawCube(world, cellSize);

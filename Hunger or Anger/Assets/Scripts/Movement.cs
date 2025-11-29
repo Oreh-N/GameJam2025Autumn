@@ -5,24 +5,20 @@ public class Movement : MonoBehaviour
 {   // It is important to set correct possition (so that map were detecting the character correctly)
 	// Correct if gizmo on character's position
 	[SerializeField] int speed = 1;
-	Map map;
 
-	private void Awake()
-	{
-		map = FindAnyObjectByType<Map>();
-	}
 
 	private void Update()
 	{
-		TryMove();
+		Vector2 dir = GetAnyWayDirection();
+		TryMove(dir);
 	}
 
-	private void TryMove()
+	private void TryMove(Vector2 dir)
 	{
-		Vector2 dir = GetAnyWayDirection();
 		dir *= speed;
 		var nxt_pos = transform.position + new Vector3(dir.x * Map.cellSize.x, dir.y * Map.cellSize.y, 0);
-		if (map.GetMapValue(nxt_pos) == (int)Map.Items.Empty || map.GetMapValue(nxt_pos) == (int)Map.Items.Carpets)
+		int val = Map.Instance.GetMapValue(nxt_pos);
+		if (val != -1 && (val == (int)Map.Items.Empty || val == (int)Map.Items.Carpets))
 			transform.position = nxt_pos;
 	}
 
