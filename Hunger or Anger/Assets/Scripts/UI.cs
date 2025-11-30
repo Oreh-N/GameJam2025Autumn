@@ -34,7 +34,8 @@ public class UI : MonoBehaviour
 
 	public void ShowInteractionButton(bool show)
 	{
-		interactionButton.SetActive(show);
+		if (interactionButton)
+			interactionButton.SetActive(show);
 	}
 
 	public void StartGame()
