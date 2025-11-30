@@ -8,13 +8,15 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 
-public class Item: MonoBehaviour
+public class Item : MonoBehaviour
 {
 	public Sprite item;
 	public Sprite brokenItem;
 
 	public int attantionVal;
 	public int angerVal;
+
+	bool isBroken = false;
 
 
 
@@ -31,20 +33,19 @@ public class Item: MonoBehaviour
 	private void OnTriggerStay2D(Collider2D collision)
 	{
 		if (collision.tag == "Player")
-		{ 
+		{
 			UI.Instance.ShowInteractionButton(true);
-			if (Input.GetKeyDown(KeyCode.E))
-			{
-				Debug.Log("Pressed E");
-				BreakItem();
-			}
 		}
-		
+
 	}
 
-	private void BreakItem()
+	public void BreakItem()
 	{
-		GetComponent<SpriteRenderer>().sprite = brokenItem;
-		Destroy(GetComponent<Collider2D>());
+		if (!isBroken)
+		{
+			GetComponent<SpriteRenderer>().sprite = brokenItem;
+			Destroy(GetComponent<BoxCollider2D>());
+			isBroken = true;
+		}
 	}
 }
