@@ -2,15 +2,31 @@ using UnityEngine;
 
 public class CatScript : MonoBehaviour
 {
+	private Item currentItem;
 
-	private void OnCollisionStay2D(Collision2D collision)
+	private void OnTriggerStay2D(Collider2D collision)
 	{
-		Item i = collision.gameObject.GetComponent<Item>();
-		if (i)
+		Item i = collision.GetComponent<Item>();
+		if (i && !i.isBroken)
 		{
-			if (Input.GetKeyDown(KeyCode.E))
-				Debug.Log("Pressed E");
-			i.BreakItem();
+			currentItem = i; 
+		}
+	}
+
+	private void OnTriggerExit2D(Collider2D collision)
+	{
+		Item i = collision.GetComponent<Item>();
+		if (i && i == currentItem)
+		{
+			currentItem = null;
+		}
+	}
+
+	private void Update()
+	{
+		if (currentItem != null && Input.GetKeyDown(KeyCode.E))
+		{
+			currentItem.BreakItem();
 		}
 	}
 }

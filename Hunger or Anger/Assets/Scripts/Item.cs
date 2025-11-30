@@ -16,7 +16,7 @@ public class Item : MonoBehaviour
 	public int attantionVal;
 	public int angerVal;
 
-	bool isBroken = false;
+	public bool isBroken = false;
 
 
 
