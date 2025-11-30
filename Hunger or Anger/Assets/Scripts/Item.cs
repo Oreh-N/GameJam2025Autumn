@@ -17,6 +17,7 @@ public class Item : MonoBehaviour
 	public int angerVal;
 
 	public bool isBroken = false;
+	public bool isChecked = false;
 
 
 
@@ -24,10 +25,6 @@ public class Item : MonoBehaviour
 	{
 		if (collision.tag == "Player")
 		{ UI.Instance.ShowInteractionButton(false); }
-	}
-
-	private void OnTriggerEnter2D(Collider2D collision)
-	{
 	}
 
 	private void OnTriggerStay2D(Collider2D collision)
@@ -46,6 +43,7 @@ public class Item : MonoBehaviour
 			GetComponent<SpriteRenderer>().sprite = brokenItem;
 			Destroy(GetComponent<BoxCollider2D>());
 			isBroken = true;
+			OwnerScript.Instance.CheckBrokenItem(transform.position);
 		}
 	}
 }
