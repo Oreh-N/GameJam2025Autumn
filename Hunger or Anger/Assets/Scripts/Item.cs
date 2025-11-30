@@ -43,7 +43,7 @@ public class Item : MonoBehaviour
 			GetComponent<SpriteRenderer>().sprite = brokenItem;
 			Destroy(GetComponent<BoxCollider2D>());
 			isBroken = true;
-			OwnerScript.Instance.CheckBrokenItem(transform.position);
+			OwnerScript.Instance.CheckBrokenItem(this);
 		}
 	}
 }

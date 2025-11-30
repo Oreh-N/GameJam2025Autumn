@@ -20,7 +20,6 @@ public class CameraShake : MonoBehaviour
 		}
 
 		Instance = this;
-		DontDestroyOnLoad(gameObject); // Optional: persist between scenes
 	}
 
 	private void Update()
