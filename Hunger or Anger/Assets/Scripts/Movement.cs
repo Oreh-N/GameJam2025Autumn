@@ -15,10 +15,11 @@ public class Movement : MonoBehaviour
 
 	private void TryMove(Vector2 dir)
 	{
+		Vector2Int cellSize = new Vector2Int(1, 1);
 		dir *= speed;
-		var nxt_pos = transform.position + new Vector3(dir.x * Map.cellSize.x, dir.y * Map.cellSize.y, 0);
+		var nxt_pos = transform.position + new Vector3(dir.x * cellSize.x, dir.y * cellSize.y, 0);
 		int val = Map.Instance.GetMapValue(nxt_pos);
-		if (val != -1 && (val == (int)Map.Items.Empty || val == (int)Map.Items.Carpets))
+		if (val != -1 && (val == (int)Items.Empty || val == (int)Items.Carpets))
 			transform.position = nxt_pos;
 	}
 

@@ -3,13 +3,13 @@ using UnityEngine.Tilemaps;
 using static UnityEditor.PlayerSettings;
 using static UnityEngine.Rendering.DebugUI;
 
+	public enum Items { Empty, Walls, Furniture, Carpets }
 public class Map : MonoBehaviour
 {
-	public static Map Instance = new Map();
-	public enum Items { Empty, Walls, Furniture, Carpets }
+	public static Map Instance;
 
-	[SerializeField] Vector3 mapStart = Vector3.zero;
-	[SerializeField] public Vector2Int size = new Vector2Int(83, 38);
+	public static Vector3 mapStart = new Vector3(-11.5f, -6.5f,0);
+	public static Vector2Int size = new Vector2Int(48, 27);
 	public static readonly Vector3Int cellSize = new Vector3Int(1, 1, 0);
 
 	[SerializeField] Tilemap wallTilemap;
@@ -19,17 +19,19 @@ public class Map : MonoBehaviour
 	[SerializeField] bool showMapGizmo = false; // only works during the game 
 	[SerializeField] Transform targetForGizmo;
 
-	int[,] map;
+	int[,] map = new int[size.x, size.y];
 
 	private void Awake()
 	{
-		if (!Instance)
+		if (Instance == null)
+		{
+			Instance = this;
 			DontDestroyOnLoad(gameObject);
-		else
+		}
+		else if (Instance != this)
+		{
 			Destroy(gameObject);
-
-		map = new int[size.x, size.y];
-
+		}
 	}
 
 	private void Start()
@@ -49,11 +51,22 @@ public class Map : MonoBehaviour
 			Debug.Log("Map not initialized");
 			return -1;
 		}
+		if (i.x >= size.x || i.y >= size.y || i.x < 0 || i.y < 0)
+		{
+			Debug.Log("Out of range (GetMapValue)");
+			return -1;
+		}
+			
 		return map[i.x, i.y];
 	}
 
 	public int GetMapValue(int x, int y)
 	{
+		if (x >= size.x || y >= size.y || x < 0 || y < 0)
+		{
+			Debug.Log("Out of range (GetMapValue)");
+			return -1;
+		}
 		return map[x, y];
 	}
 
@@ -69,8 +82,14 @@ public class Map : MonoBehaviour
 		int x = Mathf.FloorToInt(pos.x - mapStart.x + 0.5f);
 		int y = Mathf.FloorToInt(pos.y - mapStart.y + 0.5f);
 
-		return new Vector2Int(Mathf.Clamp(x, 0, size.x - 1),
-				Mathf.Clamp(y, 0, size.y - 1));
+
+		if (x >= size.x || y >= size.y || x < 0 || y < 0)
+		{
+			Debug.Log("Out of range (WorldToMap)");
+			return new Vector2Int(0,0);
+		}
+
+		return new Vector2Int(x,y);
 	}
 
 	void CopyTilemapToMap(Tilemap tMap, int val)
@@ -99,7 +118,7 @@ public class Map : MonoBehaviour
 
 		if (!showGrid) return;
 
-		Gizmos.color = new Color(0.4f, 0, 0, 0.2f);
+		Gizmos.color = new Color(0.8f, 0, 0, 0.3f);
 		for (int x = 0; x < size.x; x++)
 			for (int y = 0; y < size.y; y++)
 			{
@@ -115,6 +134,8 @@ public class Map : MonoBehaviour
 
 		if (showMapGizmo)
 		{
+			CopyTilemapToMap(furnitureTilemap, 2);
+			CopyTilemapToMap(wallTilemap, 1);
 			ShowMapGizmo();
 		}
 	}

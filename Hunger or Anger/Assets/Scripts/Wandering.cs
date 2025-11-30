@@ -8,44 +8,52 @@ using static UnityEngine.EventSystems.EventTrigger;
 
 public class Wandering : MonoBehaviour
 {
-    [SerializeField] Transform[] points;
+	[SerializeField] bool allowMovement = false;
+	[SerializeField] Transform[] points;
 	public List<Vector2Int> path = new List<Vector2Int>();
 	int curPoint = 0;
-	int curStep = 0;
 	int speed = 1;
 	float pointRadius = 0.05f;
+	Vector2Int size = Vector2Int.zero;
 
 
 	private void Start()
 	{
-		StartNewPath();
+		StartPathToNxtPoint();
+		size = Map.size;
 	}
 
+	public void StartPathToNxtPoint()
+	{
+		if (!allowMovement) return;
+		path = BFS(Map.Instance.WorldToMap(transform.position), Map.Instance.WorldToMap(points[curPoint].transform.position));
+
+		if (path != null && path.Count > 0)
+		{ StartCoroutine(FollowPath()); }
+	}
 
 	IEnumerator FollowPath()
 	{
-		for (int i = 1; i < path.Count; i++)
+		foreach (var step in path)
 		{
-			Vector3 targetPos = Map.Instance.MapToWorld(path[i].x, path[i].y);
+			Vector3 stepMapPos = Map.Instance.MapToWorld(step.x, step.y);
+			var dir = GetDirection(Map.Instance.WorldToMap(transform.position), step);
+			TryMove(dir);
+			yield return new WaitForSeconds(0.3f);
 
-			while (Vector3.Distance(transform.position, targetPos) > pointRadius)
-			{
-				var dir = GetDirection(Map.Instance.WorldToMap(points[curPoint].transform.position), path[i]);
-				TryMove(dir);
-				yield return null;
-			}
+			if (Vector3.Distance(transform.position, stepMapPos) < pointRadius)
+				break;
 		}
 
-		curPoint = (curPoint + 1) % points.Length;
+		curPoint++;
+		StartPathToNxtPoint();
 
-		yield return new WaitForSeconds(0.5f);
-		StartNewPath();
 	}
 
-	private Vector2 GetDirection(Vector2Int vector2Int, Vector2Int targetPos)
+	private Vector2 GetDirection(Vector2Int start, Vector2Int end)
 	{
 		Vector2 dir;
-		dir = targetPos - vector2Int;
+		dir = end - start;
 		if (dir != Vector2.zero)
 			dir = dir.normalized;
 
@@ -54,28 +62,21 @@ public class Wandering : MonoBehaviour
 
 	private void TryMove(Vector2 dir)
 	{
-		dir *= speed * Time.deltaTime;
-		var nxt_pos = transform.position + new Vector3(dir.x * Map.cellSize.x, dir.y * Map.cellSize.y, 0);
-		if (Map.Instance.GetMapValue(nxt_pos) == (int)Map.Items.Empty || Map.Instance.GetMapValue(nxt_pos) == (int)Map.Items.Carpets)
-		{ 
+		Vector2Int cellSize = new Vector2Int(1,1);
+		dir *= speed;
+		var nxt_pos = transform.position + new Vector3(dir.x * cellSize.x, dir.y * cellSize.y, 0);
+		if (Map.Instance.GetMapValue(nxt_pos) == (int)Items.Empty || Map.Instance.GetMapValue(nxt_pos) == (int)Items.Carpets)
+		{
 			transform.position = nxt_pos;
-			curStep++;
 		}
 
 	}
 
-	public void StartNewPath()
-	{
-		path = BFS(Map.Instance.WorldToMap(transform.position), Map.Instance.WorldToMap(points[curPoint].transform.position));
-
-		if (path != null && path.Count > 0)
-		{ StartCoroutine(FollowPath()); }
-	}
 
 	public List<Vector2Int> BFS(Vector2Int start, Vector2Int goal)
 	{
-		int w = Map.Instance.size.x;
-		int h = Map.Instance.size.y;
+		int w = size.x;
+		int h = size.y;
 
 		Queue<Vector2Int> q = new Queue<Vector2Int>();
 		bool[,] visited = new bool[w, h];
