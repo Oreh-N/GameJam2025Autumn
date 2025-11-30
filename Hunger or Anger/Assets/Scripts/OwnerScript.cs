@@ -1,10 +1,6 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using UnityEditor.Tilemaps;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public class OwnerScript : MonoBehaviour
 {
@@ -14,6 +10,8 @@ public class OwnerScript : MonoBehaviour
 	int radiusToItem = 6;
 	bool isCheckingItem = false;
 
+	[SerializeField] float checkWaitTime = 1.2f;
+	[SerializeField] float moveSpeed = 6f;
 
 	private void Awake()
 	{
@@ -28,50 +26,69 @@ public class OwnerScript : MonoBehaviour
 		}
 	}
 
-
-	void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-		if (isCheckingItem && itemsToCheck.Count > 0)
+	void Update()
+	{
+		if (!isCheckingItem && itemsToCheck.Count > 0)
 		{
-			StartCoroutine(GoCheckItem(itemsToCheck.Dequeue()));
+			Vector3 next = itemsToCheck.Peek();
+			StartCoroutine(GoCheckItem(next));
 		}
-		else
-		{
+		if (itemsToCheck.Count == 0 && !isCheckingItem)
 			GetComponent<Wandering>().isMoving = true;
-
-		}
 	}
 
-	private IEnumerator GoCheckItem(Vector3 vector3)
+	private IEnumerator GoCheckItem(Vector3 itemWorldPos)
 	{
 		isCheckingItem = true;
 		GetComponent<Wandering>().isMoving = false;
+
+		if (Vector3.Distance(transform.position, itemWorldPos) <= radiusToItem)
+		{
+			DequeueMatching(itemWorldPos);
+			yield return new WaitForSeconds(checkWaitTime);
+
+			isCheckingItem = false;
+			yield break;
+		}
+
 		var ownerMapPos = Map.Instance.WorldToMap(transform.position);
-		var targetMapPos = Map.Instance.WorldToMap(vector3);
+		var targetMapPos = Map.Instance.WorldToMap(itemWorldPos);
 		var pathOnMap = Chasing.Instance.BFS(ownerMapPos, targetMapPos);
+
+		if (pathOnMap == null || pathOnMap.Count == 0)
+		{
+			DequeueMatching(itemWorldPos);
+			isCheckingItem = false;
+			yield break;
+		}
+
 		var worldPath = TranslateMapPathToWorld(pathOnMap);
-	
+
 		foreach (Vector3 step in worldPath)
-		{ yield return StartCoroutine(MoveTo(step)); }
+		{
+			if (Vector3.Distance(transform.position, itemWorldPos) <= radiusToItem)
+				break;
+
+			yield return StartCoroutine(MoveTo(step, 0.1f));
+		}
+
+		if (Vector3.Distance(transform.position, itemWorldPos) > radiusToItem)
+		{
+			yield return StartCoroutine(MoveTo(itemWorldPos, radiusToItem));
+		}
+
+		DequeueMatching(itemWorldPos);
+
+		yield return new WaitForSeconds(checkWaitTime);
 
 		isCheckingItem = false;
 	}
 
-	private IEnumerator MoveTo(Vector3 target)
+	private IEnumerator MoveTo(Vector3 target, float stoppingDistance)
 	{
-		float speed = 6f; // your movement speed
-		while (Vector3.Distance(transform.position, target) > radiusToItem)
+		while (Vector3.Distance(transform.position, target) > Mathf.Max(0.05f, stoppingDistance))
 		{
-			transform.position = Vector3.MoveTowards(
-				transform.position,
-				target,
-				speed * Time.deltaTime);
-
+			transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
 			yield return null;
 		}
 	}
@@ -79,7 +96,7 @@ public class OwnerScript : MonoBehaviour
 	private List<Vector3> TranslateMapPathToWorld(List<Vector2Int> mapPath)
 	{
 		List<Vector3> worldPath = new List<Vector3>();
-		foreach (var item in mapPath) 
+		foreach (var item in mapPath)
 		{
 			worldPath.Add(Map.Instance.MapToWorld(item.x, item.y));
 		}
@@ -88,7 +105,45 @@ public class OwnerScript : MonoBehaviour
 	}
 
 	public void CheckBrokenItem(Vector3 itemPosition)
-    {
+	{
+		foreach (var p in itemsToCheck)
+		{
+			if (Vector3.Distance(p, itemPosition) <= radiusToItem)
+				return;
+		}
+		if (isCheckingItem && itemsToCheck.Count > 0)
+		{
+			var top = itemsToCheck.Peek();
+			if (Vector3.Distance(top, itemPosition) <= radiusToItem)
+				return;
+		}
+
 		itemsToCheck.Enqueue(itemPosition);
-    }
+	}
+
+	private void DequeueMatching(Vector3 itemPosition)
+	{
+		if (itemsToCheck.Count == 0) return;
+
+		Vector3 first = itemsToCheck.Peek();
+		if (Vector3.Distance(first, itemPosition) <= radiusToItem || first == itemPosition)
+		{
+			itemsToCheck.Dequeue();
+			return;
+		}
+
+		Queue<Vector3> newQ = new Queue<Vector3>();
+		bool removed = false;
+		while (itemsToCheck.Count > 0)
+		{
+			var p = itemsToCheck.Dequeue();
+			if (!removed && (Vector3.Distance(p, itemPosition) <= radiusToItem || p == itemPosition))
+			{
+				removed = true; // skip this one
+				continue;
+			}
+			newQ.Enqueue(p);
+		}
+		itemsToCheck = newQ;
+	}
 }
